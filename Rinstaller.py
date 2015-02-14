@@ -13,12 +13,14 @@ from subprocess import call
 #Check the running version of Python
 import sys
 import binascii
+PYTHON_HEXVERSION = 0x03000000
 def CheckPython():
-    print(sys.hexversion)
-    if 0x03000000  > sys.hexversion:
+    if PYTHON_HEXVERSION  > sys.hexversion:
         print(sys.version)
         print("Please run this script in Python 3.0.0")
+        return False
     else:
         print("Python version Test OK!")
+        return True
 
 CheckPython()
