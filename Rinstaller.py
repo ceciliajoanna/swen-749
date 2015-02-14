@@ -9,4 +9,16 @@ from subprocess import call
 #If all the dependencies are met then intiate the installation procedure.
 #Inform the user of switching the R version before using it.
 
-call(["ls","-l"])
+#Step 1
+#Check the running version of Python
+import sys
+import binascii
+def CheckPython():
+    print(sys.hexversion)
+    if 0x03000000  > sys.hexversion:
+        print(sys.version)
+        print("Please run this script in Python 3.0.0")
+    else:
+        print("Python version Test OK!")
+
+CheckPython()
