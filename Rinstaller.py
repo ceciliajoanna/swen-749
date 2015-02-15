@@ -23,4 +23,7 @@ def CheckPython():
         print("Python version Test OK!")
         return True
 
-CheckPython()
+if CheckPython():
+    #Step 2 check if there is existing R language installed
+    print("Enter the version of R to be installed:")
+    version = input()
