@@ -15,6 +15,9 @@ import sys
 import binascii
 import urllib 
 import os
+import subprocess
+import pdb
+
 PYTHON_HEXVERSION = 0x03000000
 def CheckPython():
     if PYTHON_HEXVERSION  > sys.hexversion:
@@ -25,8 +28,18 @@ def CheckPython():
         print("Python version Test OK!")
         return True
 
+def tail():
+    command = ["R","--version"] # your bash script execute command goes here
+    popen = subprocess.Popen(command, stdout=subprocess.PIPE)
+    for line in iter(popen.stdout.readline,b'' ):
+        yield line,
+    popen.communicate()
+
+
 def CheckExistingR(version):
-    call(['R','--version'])
+    details = next(tail())
+    print ("Output:")
+    print (details)
 
 def CheckDirectory():
     #check if the download directory exists or not
@@ -63,4 +76,5 @@ if CheckPython():
     while(not ParseMajorVersion(version = input("Enter the version of R to be installed:"))):
         print("The version you entered is incorrect.The script will re-run and input the correct version")
     CheckExistingR(version)
+
     #Install all the dependencies of R
