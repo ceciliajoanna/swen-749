@@ -13,6 +13,8 @@ from subprocess import call
 #Check the running version of Python
 import sys
 import binascii
+import urllib 
+import os
 PYTHON_HEXVERSION = 0x03000000
 def CheckPython():
     if PYTHON_HEXVERSION  > sys.hexversion:
@@ -23,7 +25,42 @@ def CheckPython():
         print("Python version Test OK!")
         return True
 
+def CheckExistingR(version):
+    call(['R','--version'])
+
+def CheckDirectory():
+    #check if the download directory exists or not
+    if not os.path.isdir("~/R-packages"):
+        call(['mkdir','~/R-packages'])
+    call(['cd','~/R-packages/'])
+
+def is_number(s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
+def ParseMajorVersion(version):
+    #check the major version from the string and return it
+    majorversion = version[0]
+    if is_number(majorversion):
+        return majorversion
+    else:
+        return False
+        
+
+def DownloadR(version):
+    m = ParseMajorVersion(version)
+    
+
+def InstallRDep():
+    call(['sudo','apt-get','build-dep','r-base'])
+
 if CheckPython():
+    version = 0
     #Step 2 check if there is existing R language installed
-    print("Enter the version of R to be installed:")
-    version = input()
+    while(not ParseMajorVersion(version = input("Enter the version of R to be installed:"))):
+        print("The version you entered is incorrect.The script will re-run and input the correct version")
+    CheckExistingR(version)
+    #Install all the dependencies of R
