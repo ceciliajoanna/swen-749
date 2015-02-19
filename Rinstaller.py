@@ -19,7 +19,7 @@ import subprocess
 import pdb
 import re
 from os.path import expanduser
-import tarfile
+from utils import extract_gz_file,extract_tar_gz
 
 PYTHON_HEXVERSION = 0x03000000
 DOWNLOAD_URL = 'http://cran.us.r-project.org/src/base/'
@@ -63,7 +63,7 @@ def CheckDirectory(version):
     home = expanduser("~")
     if not os.path.isdir(home +"/R-packages"):
         call(['mkdir',home +'/R-packages'])
-    return home + '/R-packages/R-'+version[0]+'-'+version[2]+'-'+version[4]+'.tar.gz'
+    return home + '/R-packages/R-'+version[0]+'-'+version[2]+'-'+version[4],home + '/R-packages/R-'+version[0]+'-'+version[2]+'-'+version[4]+'.tar.gz'
 def is_number(s):
         try:
             float(s)
@@ -81,15 +81,26 @@ def ParseMajorVersion(version):
         
 
 def DownloadR(URL,version):
-    newFile = CheckDirectory(version)
+    directory,newFile = CheckDirectory(version)
     print(URL)
-    urllib.request.urlretrieve(URL,newFile)
-    return newFile
+    response = urllib.request.urlretrieve(URL,newFile)
+    return directory,newFile
     
 def BuildFinalUrl(version):
     return  DOWNLOAD_URL + "R-"+str(version[0]) + '/R-' + version[0] + '.' + version[2] + '.' + version[4] + ".tar.gz"
 def InstallRDep():
-    call(['sudo','apt-get','build-dep','r-base'])
+    call(['sudo','apt-get','install','build-essential','f2c','gfortran','libblas-dev','liblapack-dev','g++'])
+
+def InstallR(filename,directory):
+    InstallRDep()
+    extract_tar_gz(filename)
+    print(os.getcwd())
+    os.chdir(directory+'/')
+    call(['./configure'])
+    call(['make'])
+    call(['make','check'])
+    call(['make','install'])
+    
 
 
 if CheckPython():
@@ -101,5 +112,6 @@ if CheckPython():
     if CheckExistingR(version):
         ParseMajorVersion(version)
         URL = BuildFinalUrl(version)
-        newFile = DownloadR(URL,version)
+        directory,newFile = DownloadR(URL,version)
+        InstallR(newFile,directory)
     #Install all the dependencies of R

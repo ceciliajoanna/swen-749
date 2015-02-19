@@ -1,4 +1,5 @@
-
+import gzip
+import tarfile
 
 def open_url(url, pattern):
 	"""" This function returns all the patterns found in a Web page """ 
@@ -20,3 +21,8 @@ def extract_gz_file(file_name):
 	uncompressed_file.write(file_content)
 	uncompressed_file.close()
 	
+def extract_tar_gz(file_name):
+    tfile = tarfile.open(file_name,'r:gz')
+    tfile.extractall()
+    tfile.close()
+    print ("Tarfile Extracted")
