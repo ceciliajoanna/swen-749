@@ -13,12 +13,16 @@ from subprocess import call
 #Check the running version of Python
 import sys
 import binascii
-import urllib 
+import urllib.request 
 import os
 import subprocess
 import pdb
+import re
+from os.path import expanduser
+import tarfile
 
 PYTHON_HEXVERSION = 0x03000000
+DOWNLOAD_URL = 'http://cran.us.r-project.org/src/base/'
 def CheckPython():
     if PYTHON_HEXVERSION  > sys.hexversion:
         print(sys.version)
@@ -39,14 +43,27 @@ def tail():
 def CheckExistingR(version):
     details = next(tail())
     print ("Output:")
-    print (details)
+    match = re.search('(?:(\d+)\.)?(?:(\d+)\.)?(\*|\d+)',str(details))
+    if match:
+        release = match.group(1)
+        majorv = match.group(2)
+        minorv = match.group(3)
+        if version[0] == str(release):
+            if version[2] == str(majorv):
+                if version[4] == str(minorv):
+                    print("You have the same version.You don't need to install it.")
+                    return False
+        return True
+    else:
+        print("Some problem in parsing the version of R from the system")
 
-def CheckDirectory():
+
+def CheckDirectory(version):
     #check if the download directory exists or not
-    if not os.path.isdir("~/R-packages"):
-        call(['mkdir','~/R-packages'])
-    call(['cd','~/R-packages/'])
-
+    home = expanduser("~")
+    if not os.path.isdir(home +"/R-packages"):
+        call(['mkdir',home +'/R-packages'])
+    return home + '/R-packages/R-'+version[0]+'-'+version[2]+'-'+version[4]+'.tar.gz'
 def is_number(s):
         try:
             float(s)
@@ -58,23 +75,31 @@ def ParseMajorVersion(version):
     #check the major version from the string and return it
     majorversion = version[0]
     if is_number(majorversion):
-        return majorversion
+       return True
     else:
         return False
         
 
-def DownloadR(version):
-    m = ParseMajorVersion(version)
+def DownloadR(URL,version):
+    newFile = CheckDirectory(version)
+    print(URL)
+    urllib.request.urlretrieve(URL,newFile)
+    return newFile
     
-
+def BuildFinalUrl(version):
+    return  DOWNLOAD_URL + "R-"+str(version[0]) + '/R-' + version[0] + '.' + version[2] + '.' + version[4] + ".tar.gz"
 def InstallRDep():
     call(['sudo','apt-get','build-dep','r-base'])
 
-if CheckPython():
-    version = 0
-    #Step 2 check if there is existing R language installed
-    while(not ParseMajorVersion(version = input("Enter the version of R to be installed:"))):
-        print("The version you entered is incorrect.The script will re-run and input the correct version")
-    CheckExistingR(version)
 
+if CheckPython():
+    version = str(0)
+    #Step 2 check if there is existing R language installed
+    #while(version = input("Enter the version of R to be installed:")):
+    #    print("The version you entered is incorrect.The script will re-run and input the correct version")
+    version = input("Enter the version of R to be installed:")
+    if CheckExistingR(version):
+        ParseMajorVersion(version)
+        URL = BuildFinalUrl(version)
+        newFile = DownloadR(URL,version)
     #Install all the dependencies of R
