@@ -21,8 +21,8 @@ def extract_gz_file(file_name):
 	uncompressed_file.write(file_content)
 	uncompressed_file.close()
 	
-def extract_tar_gz(file_name):
+def extract_tar_gz(file_name,path):
     tfile = tarfile.open(file_name,'r:gz')
-    tfile.extractall()
+    tfile.extractall(path)
     tfile.close()
     print ("Tarfile Extracted")

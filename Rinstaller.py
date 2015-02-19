@@ -91,17 +91,30 @@ def BuildFinalUrl(version):
 def InstallRDep():
     call(['sudo','apt-get','install','build-essential','f2c','gfortran','libblas-dev','liblapack-dev','g++'])
 
-def InstallR(filename,directory):
+def InstallR(filename,directory,version):
     InstallRDep()
-    extract_tar_gz(filename)
+    extract_tar_gz(filename,directory)
     print(os.getcwd())
-    os.chdir(directory+'/')
+    os.chdir(directory+'/R-'+version+'/')
     call(['./configure'])
     call(['make'])
     call(['make','check'])
-    call(['make','install'])
-    
+    if os.path.isfile(directory+'/R-'+version+'/bin/R'):
+        MakeSymLink(directory+'/R-'+version+'/',version)
+    else:
+        print('Binaries did not compile succefffully! Contact the administrator')
+    #call(['make','install'])
 
+def MakeSymLink(path,version):
+    call(['sudo','ln','-s',path+'bin/R','/usr/bin/R-'+version])
+    print("R is installed")
+
+def FindSymLink(version):
+    if os.path.exists('/usr/bin/R-'+version):
+        print("The version is already installed")
+        return True
+    print('No exsting symlinks found')
+    return False
 
 if CheckPython():
     version = str(0)
@@ -109,9 +122,10 @@ if CheckPython():
     #while(version = input("Enter the version of R to be installed:")):
     #    print("The version you entered is incorrect.The script will re-run and input the correct version")
     version = input("Enter the version of R to be installed:")
+    
     if CheckExistingR(version):
-        ParseMajorVersion(version)
-        URL = BuildFinalUrl(version)
-        directory,newFile = DownloadR(URL,version)
-        InstallR(newFile,directory)
-    #Install all the dependencies of R
+        if not FindSymLink(version):
+            ParseMajorVersion(version)
+            URL = BuildFinalUrl(version)
+            directory,newFile = DownloadR(URL,version)
+            InstallR(newFile,directory,version)
