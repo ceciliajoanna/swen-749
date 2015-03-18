@@ -6,7 +6,7 @@ def find_pattern(url, pattern):
 	raw_response = urllib2.urlopen(url)
 	charset = raw_response.info().get_param('charset', 'utf8')
 	html_content = raw_response.read().decode(charset)
-	return re.findall(pattern, html_content)
+	return re.findall(pattern, html_content, re.DOTALL)
 
 
 def exists(url):
