@@ -11,6 +11,7 @@ ROOT_URL = "http://cran.r-project.org/web/packages/available_packages_by_name.ht
 
 class AvailablePackagesParser(HTMLParser):
 	is_parsing_table = False
+	is_parsing_empty_row = False
 	is_library_name = False
 	is_library_description = False
 	list_libraries = []
@@ -24,12 +25,11 @@ class AvailablePackagesParser(HTMLParser):
 			self.is_parsing_table = True
 
 		# this verification ensure that the empty line rows are desconsidered
-		# if tag == "tr" and len(attrs) > 0 and attrs[0][0] == "id":
-
-
+		if tag == "tr" and len(attrs) > 0 and attrs[0][0] == "id":
+			self.is_parsing_empty_row = True
 
 		# this if just ensure that the links in the top for pagination are not considered 
-		if self.is_parsing_table:
+		if self.is_parsing_table and not self.is_parsing_empty_row:
 			if tag == "a" :
 				self.is_library_name = True
 				for attr in attrs:
@@ -54,15 +54,19 @@ class AvailablePackagesParser(HTMLParser):
 		elif tag == "td": 
 			self.is_library_description = False
 		elif tag == "tr": 
-			self.list_libraries.append(self.current_obj)
-			self.current_obj = Library()
+			if self.is_parsing_empty_row:
+				self.is_parsing_empty_row = False
+			else:
+				self.list_libraries.append(self.current_obj)
+				self.current_obj = Library()
 
 	def get_libs(self):
 		return self.list_libraries
 
 
 
-
+class PackageDetailParser(HTMLParser):
+	
 
 
 class WebCrawler:
