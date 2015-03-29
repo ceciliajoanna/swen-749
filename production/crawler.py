@@ -3,18 +3,20 @@
 """
 Crawler to acquire data on the Web.
 """
-from urllib.parse import urljoin
-from utils import Library
+
+#External Imports
 import html 
-from html.parser import HTMLParser
 import re
+from urllib.parse import urljoin
 import urllib.request as urllib2
 import html.entities as htmlentitydefs
+from html.parser import HTMLParser
 from html.entities import name2codepoint
+# Local Imports
+from utils import URL_LIBS_LIST
+from utils import Library
+from db_manager import LibraryManager
 
-
-
-ROOT_URL = "http://cran.r-project.org/web/packages/available_packages_by_name.html" 
 
 class AvailablePackagesParser(HTMLParser):
 	is_parsing_table = False
@@ -35,13 +37,13 @@ class AvailablePackagesParser(HTMLParser):
 		if tag == "tr" and len(attrs) > 0 and attrs[0][0] == "id":
 			self.is_parsing_empty_row = True
 
-		# this if just ensure that the links in the top for pagination are not considered 
+		# this "if" just ensure that the links in the top for pagination are not considered 
 		if self.is_parsing_table and not self.is_parsing_empty_row:
 			if tag == "a" :
 				self.is_library_name = True
 				for attr in attrs:
 					if attr[0] == "href":
-						self.current_obj.url_info = urljoin(ROOT_URL,attr[1])
+						self.current_obj.url_info = urljoin(URL_LIBS_LIST,attr[1])
 			elif tag == "td": 
 				self.is_library_description = True
 			elif tag == "tr": 
@@ -71,7 +73,6 @@ class AvailablePackagesParser(HTMLParser):
 		return self.list_libraries
 
 
-
 class PackageDetailParser(HTMLParser):
 	STATE_INITIAL = 0
 	STATE_TABLE = 1
@@ -97,7 +98,7 @@ class PackageDetailParser(HTMLParser):
 		
 	def handle_data(self, data):
 		if self.current_state == self.STATE_KEY:
-			self.last_key = data.replace("\n","")
+			self.last_key = data.replace("\n","").replace(":","").lowercase()
 			self.lib_info[self.last_key] = ""
 		elif self.current_state == self.STATE_VALUE:
 			self.lib_info[self.last_key] += data.replace("\n","")
@@ -127,35 +128,35 @@ class PackageDetailParser(HTMLParser):
 class WebCrawler:
 	
 	def run(self):
-
-		raw_response = urllib2.urlopen("http://cran.r-project.org/web/packages/A3/index.html")
-		charset = raw_response.info().get_param('charset', 'utf-8')
-		html_content = raw_response.read().decode('ASCII')
-		# print(html_content)
-		parser = PackageDetailParser()
-		parser.feed(html_content)
 		
-		# print(parser.get_lib_info())
+		print("WebCrawler >> Getting information about Available Packages... ")
+		raw_response = urllib2.urlopen(URL_LIBS_LIST)
+		charset = raw_response.info().get_param('charset', 'utf8')
+		html_content = raw_response.read().decode(charset)
+		parser = AvailablePackagesParser()
+		parser.feed(html_content)
+		libraries = parser.get_libs()
+		
+		print("WebCrawler >> Available Packages found. Saving packages... ")
+		#save the libraries
+		library_manager = LibraryManager()
+		library_manager.clear()
+		library_manager.save(libraries)
 
 
-		# raw_response = urllib2.urlopen(ROOT_URL)
-		# charset = raw_response.info().get_param('charset', 'utf8')
-		# html_content = raw_response.read().decode(charset)
-		# parser = AvailablePackagesParser()
-		# parser.feed(html_content)
-		# libraries = parser.get_libs()
-
+		print("WebCrawler >> Success! Available Packages saved. Retrieving packages versions... ")
 		
 		# for lib in libraries:
 		# 	print(lib)
-		# 	raw_response = urllib2.urlopen(ROOT_URL)
-		# 	charset = raw_response.info().get_param('charset', 'utf8')
-		# 	html_content = raw_response.read().decode(charset)
-		# 	parser = PackageDetailParser()
-		# 	parser.feed(html_content)
+			# raw_response = urllib2.urlopen(lib.url_info)
+			# charset = raw_response.info().get_param('charset', 'utf8')
+			# html_content = raw_response.read().decode(charset)
+			# parser = PackageDetailParser()
+			# parser.feed(html_content)
 
+			# latest_library_info = parser.get_lib_info()
+			# # older_library_infos = 
 			
-			# print(parser.get_lib_info())
 
 
 
