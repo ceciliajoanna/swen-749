@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
-"""
-Crawler to acquire data on the Web.
-"""
 
-#External Imports
-import html 
-import re
-from urllib.parse import urljoin
-import urllib.request as urllib2
-import html.entities as htmlentitydefs
+
+# External Imports
 from html.parser import HTMLParser
 from html.entities import name2codepoint
+from urllib.parse import urljoin
+import urllib.request as urllib2
+
+import re
+
 # Local Imports
-from utils import URL_LIBS_LIST
-from utils import Library
-from db_manager import LibraryManager
+from db_manager import Library, LibraryVersion, LibraryManager
+from utils import cls, URL_LIBS_LIST
+
+
+
 
 
 class AvailablePackagesParser(HTMLParser):
@@ -74,7 +74,8 @@ class AvailablePackagesParser(HTMLParser):
 
 
 class PackageDetailParser(HTMLParser):
-	STATE_INITIAL = 0
+	STATE_INITIAL = -1
+	STATE_LONG_DESCRIPTION = 0
 	STATE_TABLE = 1
 	STATE_ROW = 2
 	STATE_KEY = 3
@@ -86,47 +87,48 @@ class PackageDetailParser(HTMLParser):
 
 	
 	def handle_starttag(self, tag, attrs):
-		if self.current_state == self.STATE_INITIAL:
-			if tag == "table" and re.match("Package .* summary",attrs[0][1]):
-				self.current_state = self.STATE_TABLE
-		elif self.current_state ==self.STATE_TABLE:
-			if tag == "tr":
+		if self.current_state == self.STATE_INITIAL and tag == "p": 
+				self.current_state = self.STATE_LONG_DESCRIPTION
+		elif self.current_state ==self.STATE_TABLE and tag == "tr":
 				self.current_state = self.STATE_ROW
-		elif self.current_state == self.STATE_ROW:
-			if tag == "td":
+		elif self.current_state == self.STATE_ROW and tag == "td":
 				self.current_state = self.STATE_KEY
 		
 	def handle_data(self, data):
-		if self.current_state == self.STATE_KEY:
-			self.last_key = data.replace("\n","").replace(":","").lowercase()
+		if self.current_state == self.STATE_LONG_DESCRIPTION:
+			self.last_key = "long_description"
+			self.lib_info[self.last_key] = data
+		elif self.current_state == self.STATE_KEY:
+			self.last_key = data.replace("\n","").replace(":","").lower()
 			self.lib_info[self.last_key] = ""
 		elif self.current_state == self.STATE_VALUE:
 			self.lib_info[self.last_key] += data.replace("\n","")
 
+
 	def handle_entityref(self,name):
-		self.lib_info[self.last_key] += str(name2codepoint[name])
+		if self.last_key != None and self.current_state in [ self.STATE_LONG_DESCRIPTION , self.STATE_VALUE ] :
+			self.lib_info[self.last_key] += str(name2codepoint[name])
 		
 
 
 	def handle_endtag(self, tag):
-		if tag == "table" :
+		if tag == "p" :
+			self.current_state = self.STATE_TABLE
+		elif tag == "table" :
 			self.current_state = self.STATE_FINISHED
-		elif self.current_state == self.STATE_KEY:
-			if tag == "td":
+		elif self.current_state == self.STATE_KEY and tag == "td":
 				self.current_state = self.STATE_VALUE
-		elif self.current_state == self.STATE_VALUE:
-			if tag == "td":
+		elif self.current_state == self.STATE_VALUE and tag == "td":
 				self.current_state = self.STATE_ROW
-
-
-
 
 	def get_lib_info(self):
 		return self.lib_info
 
 
 class WebCrawler:
-	
+	"""
+	Crawler to acquire data on the Web.
+	"""
 	def run(self):
 		
 		print("WebCrawler >> Getting information about Available Packages... ")
@@ -137,26 +139,50 @@ class WebCrawler:
 		parser.feed(html_content)
 		libraries = parser.get_libs()
 		
-		print("WebCrawler >> Available Packages found. Saving packages... ")
+
+		print("WebCrawler >> Retrieving package versions information... ")
+		count = 0
+		
+		for lib in libraries:
+			# Get info for the latest version 
+			raw_response = urllib2.urlopen(lib.url_info)
+			charset = raw_response.info().get_param('charset', 'utf8')
+			html_content = raw_response.read().decode(charset)
+			parser = PackageDetailParser()
+			parser.feed(html_content)
+			latest_version_info = parser.get_lib_info()
+			# The latest package version info also contains the  long_description of the librari
+			lib.long_description = latest_version_info.get("long_description",None)
+
+			latest_version = LibraryVersion()
+			latest_version.version_number = latest_version_info.get("version",None)
+			latest_version.release_date = latest_version_info.get("published",None)
+			latest_version.depends = latest_version_info.get("depends",None)
+			latest_version.suggests = latest_version_info.get("suggests",None)
+			latest_version.needs_compilation = latest_version_info.get("needscompilation",None)
+			
+			count = count + 1
+			cls()
+			print("WebCrawler >> Retrieving package versions information... ")
+			print(str(count) +" out of " + str(len(libraries)))
+
+
+
+
+			# Retrieves older versions
+			# lib.versions.append(latest_version)
+			# older_version_infos = 
+		
+
+		print("WebCrawler >> Saving data collected... ")
 		#save the libraries
 		library_manager = LibraryManager()
 		library_manager.clear()
 		library_manager.save(libraries)
 
+		# save the versions
 
-		print("WebCrawler >> Success! Available Packages saved. Retrieving packages versions... ")
-		
-		# for lib in libraries:
-		# 	print(lib)
-			# raw_response = urllib2.urlopen(lib.url_info)
-			# charset = raw_response.info().get_param('charset', 'utf8')
-			# html_content = raw_response.read().decode(charset)
-			# parser = PackageDetailParser()
-			# parser.feed(html_content)
 
-			# latest_library_info = parser.get_lib_info()
-			# # older_library_infos = 
-			
-
+		print("WebCrawler >> Success! Data saved. I am done for today :D ")
 
 

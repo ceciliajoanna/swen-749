@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 import urllib.request as urllib2
 import re
+from html.entities import name2codepoint
 
 
 # URLs definition
@@ -10,50 +11,28 @@ URL_LIBS_CONTRIB=  urljoin(URL_LIBS_ROOT, "/src/contrib/")
 URL_LIBS_ARCHIVE = urljoin(URL_LIBS_CONTRIB, "Archive/")
 
 
+import os	
 
-class Library:
-	name = ""
-	short_description = ""
-	long_description = None
-	url_info = ""
-	versions = []
-
-	def __str__(self):
-		return self.name
-
-	def __repr__(self):
-		return self.name
-
-
-	def to_dict(self):
-		return {
-			"name":self.name,
-			"short_description":self.short_description,
-			"long_description":self.long_description,
-			"url_info":self.url_info
-		}
-
-
-class RVersion:
-	version_number = ""
-	release_date = ""
-
-	def __str__(self):
-		return str(self.version_number)
+def cls():
+	os.system(['clear','cls'][os.name == 'nt'])
 
 
 
-class LibraryVersion:
-	version_number = ""
-	release_date  = ""
-	min_r_version = ""
-	max_r_version = ""
-	depends = ""
-	suggests = ""
-	needs_compilation = ""
+def find_library_url(library_name,version):
+	""" Find the library URL given its name and version. None is returned if the library could not be found """ 
+	url_archive = urljoin(URL_LIBS_ARCHIVE, '{0}/{1}_{2}.tar.gz'.format(library_name, library_name,version) )
+	url_contrib = urljoin(URL_LIBS_CONTRIB, '{0}_{1}.tar.gz'.format(library_name,version) )
+	
+	if exists(url_archive):
+		return url_archive
+	elif exists(url_contrib):
+		return url_contrib
+	else:
+		return None
 
-	def __str__(self):
-		return str(self.version_number)
+
+
+
 
 
 
