@@ -2,10 +2,11 @@ from urllib.parse import urljoin
 import urllib.request as urllib2
 import re
 from html.entities import name2codepoint
-
+import tarfile
 
 # URLs definition
 URL_LIBS_ROOT = "http://cran.r-project.org/"
+R_DOWNLOAD_URL = urljoin(URL_LIBS_ROOT,'base/')
 URL_LIBS_LIST = urljoin(URL_LIBS_ROOT, "/web/packages/available_packages_by_name.html")
 URL_LIBS_CONTRIB=  urljoin(URL_LIBS_ROOT, "/src/contrib/")
 URL_LIBS_ARCHIVE = urljoin(URL_LIBS_CONTRIB, "Archive/")

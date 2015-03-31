@@ -1,5 +1,17 @@
 
 from subprocess import call
+
+# To install R:
+# download package
+# ./configure --with-x=no
+# make prefix=/usr/local/R/3.0.0
+# make install 
+# The final step is to create a symbolic link to the R binary:
+# ln -s /opt/R2.14/bin/R /usr/bin/R2.14
+# Explanation here: http://stackoverflow.com/a/8343739
+
+
+
 # Check if the computer has python 3 version installed
 # Check if there is an existing R language installed
 # If yes Check for a possibility in which you install for both the version of R
@@ -20,14 +32,14 @@ import subprocess
 import pdb
 import re
 from os.path import expanduser
-from utils import extract_gz_file,extract_tar_gz
+from utils import extract_tar_gz
 
 PYTHON_HEXVERSION = 0x03000000
 DOWNLOAD_URL = 'http://cran.us.r-project.org/src/base/'
 def CheckPython():
     if PYTHON_HEXVERSION  > sys.hexversion:
         print(sys.version)
-        print("Please run this script in Python 3.0.0")
+        print("Please run this script in Python 3.X.X")
         return False
     else:
         print("Python version Test OK!")
