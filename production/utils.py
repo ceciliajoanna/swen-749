@@ -30,6 +30,12 @@ def find_library_url(library_name,version):
 	else:
 		return None
 
+def extract_tar_gz(file_name,path):
+	tfile = tarfile.open(file_name,'r:gz')
+	tfile.extractall(path)
+	tfile.close()
+	print ("Tarfile Extracted")
+
 
 
 
