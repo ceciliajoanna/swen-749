@@ -3,8 +3,8 @@ from subprocess import call
 
 # To install R:
 # download package
-# ./configure --with-x=no
-# make prefix=/usr/local/R/3.0.0
+# ./configure --prefix=/usr/local/R/2.0.0 --with-x=no
+# make prefix=/usr/local/R/2.0.0
 # make install 
 # The final step is to create a symbolic link to the R binary:
 # ln -s /opt/R2.14/bin/R /usr/bin/R2.14
